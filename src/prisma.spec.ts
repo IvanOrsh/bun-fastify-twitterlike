@@ -321,4 +321,64 @@ describe("testing prisma access", () => {
     expect(profiles[0].id).toBe(profileA.id);
     expect(profiles[1].id).toBe(profileB.id);
   });
+
+  it("delete specific profile", async () => {
+    const {
+      userName: userNameA,
+      fullName: fullNameA,
+      description: descriptionA,
+      region: regionA,
+      mainUrl: mainUrlA,
+      avatar: avatarA,
+    } = getNewProfile();
+    const profileA = await prisma.profile.create({
+      data: {
+        userName: userNameA,
+        fullName: fullNameA,
+        description: descriptionA,
+        region: regionA,
+        mainUrl: mainUrlA,
+        avatar: avatarA,
+      },
+    });
+
+    const {
+      userName: userNameB,
+      fullName: fullNameB,
+      description: descriptionB,
+      region: regionB,
+      mainUrl: mainUrlB,
+      avatar: avatarB,
+    } = getNewProfile();
+    let profileB = await prisma.profile.create({
+      data: {
+        userName: userNameB,
+        fullName: fullNameB,
+        description: descriptionB,
+        region: regionB,
+        mainUrl: mainUrlB,
+        avatar: avatarB,
+      },
+      include: {
+        messages: true,
+      },
+    });
+
+    await prisma.profile.delete({
+      where: {
+        id: profileA.id,
+      },
+    });
+
+    const profiles = await prisma.profile.findMany({
+      where: {
+        id: {
+          in: [profileA.id, profileB.id],
+        },
+      },
+    });
+
+    expect(profiles.length).toBe(1);
+    expect(profiles[0].id).toBe(profileB.id);
+  });
 });
