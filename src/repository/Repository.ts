@@ -1,0 +1,21 @@
+import { PrismaClient } from "@prisma/client";
+
+import ProfileRepo from "./profile/ProfileRepo";
+import MessageRepo from "./message/MessageRepo";
+
+// gonna be attached to fastify via decorators
+export default class Repository {
+  private readonly client: PrismaClient;
+  readonly profileRepo: ProfileRepo;
+  readonly messageRepo: MessageRepo;
+
+  constructor() {
+    this.client = new PrismaClient();
+    this.profileRepo = new ProfileRepo(this.client);
+    this.messageRepo = new MessageRepo(this.client);
+  }
+
+  close() {
+    this.client.$disconnect();
+  }
+}
