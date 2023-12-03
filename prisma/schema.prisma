@@ -48,4 +48,40 @@ model Message {
 
   author Profile @relation(fields: [authorId], references: [id])
   authorId BigInt
+
+  body String @db.VarChar(150)
+  likes Int @default(0)
+  image Bytes? @db.ByteA
+
+  responderMessageResponses MessageResponse[] @relation("ResponderMessageResponse")
+  respondedMessageResponses MessageResponse[] @relation("RespondedMessageResponse")
+
+  broadcasterMessageBroadcasts MessageBroadcast[] @relation("BroadcasterMessageBroadcast")
+  broadcastMessageBroadcasts MessageBroadcast[] @relation("BroadcastMessageBroadcast")
+}
+
+model MessageResponse {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  createdAt DateTime @default(now()) 
+  updatedAt DateTime @updatedAt
+
+  responderMsg Message @relation("ResponderMessageResponse", fields: [responderMsgId], references: [id])
+  responderMsgId BigInt
+
+  respondedMsg Message @relation("RespondedMessageResponse", fields: [respondedMsgId], references: [id])
+  respondedMsgId BigInt
+}
+
+model MessageBroadcast {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  createdAt DateTime @default(now()) 
+  updatedAt DateTime @updatedAt
+
+  broadcasterMsg Message @relation("BroadcasterMessageBroadcast", fields: [broadcasterMsgId], references: [id])
+  broadcasterMsgId BigInt
+
+  broadcastMsg Message @relation("BroadcastMessageBroadcast", fields: [broadcastMsgId], references: [id])
+  broadcastMsgId BigInt
+
+  additionalMessage String? @db.VarChar(140)
 }
