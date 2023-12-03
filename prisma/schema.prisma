@@ -9,3 +9,43 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Profile {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  createdAt DateTime @default(now()) 
+  updatedAt DateTime @updatedAt
+
+  userName String @unique @db.VarChar(50)
+  fullName String @db.VarChar(100)
+
+  description String? @db.VarChar(250)
+  region String? @db.VarChar(50)
+  mainUrl String? @db.VarChar(250)
+  avatar Bytes? @db.ByteA
+
+  messages Message[]
+  
+  followers Follow[] @relation("Follower")
+  followed Follow[] @relation("Followed")
+}
+
+model Follow {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  createdAt DateTime @default(now()) 
+  updatedAt DateTime @updatedAt
+
+  follower Profile @relation("Follower", fields: [followerId], references: [id])
+  followerId BigInt
+
+  followed Profile @relation("Followed", fields: [followedId], references: [id])
+  followedId BigInt
+}
+
+model Message {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  createdAt DateTime @default(now()) 
+  updatedAt DateTime @updatedAt
+
+  author Profile @relation(fields: [authorId], references: [id])
+  authorId BigInt
+}
