@@ -3,7 +3,8 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun --hot ./src/index.ts"
+    "dev": "bun --hot ./src/index.ts",
+    "migrate:dev": "bun prisma migrate dev"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.3.1",

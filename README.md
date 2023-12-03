@@ -1,15 +1,21 @@
 # bun-fastify-twitterlike
 
-To install dependencies:
+## db setup
 
-```bash
-bun install
+1. Create migration (if needed)
+
+```sh
+bunx prisma migrate dev --name init
 ```
 
-To run:
+2. deploy docker by running
 
-```bash
-bun run index.ts
+```sh
+sh deploy.sh
 ```
 
-This project was created using `bun init` in bun v1.0.14. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+3. deploy test data by running
+
+```sh
+psql -h localhost -p 5432 -d fastserver -U fastserver -a -f testdata.sql
+```
