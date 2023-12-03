@@ -25,7 +25,7 @@ export default class MessageRepo {
       .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
   }
 
-  async selectedMessagesFromAuthorId(authorId: bigint) {
+  async selectedMessagesByAuthorId(authorId: bigint) {
     return await this.client.message.findMany({
       where: {
         authorId,
@@ -61,7 +61,7 @@ export default class MessageRepo {
     );
   }
 
-  async selectMessageBroadcast(broadcastMsgId: bigint) {
+  async selectMessageBroadcasts(broadcastMsgId: bigint) {
     return (
       await this.client.messageBroadcast.findMany({
         select: {
@@ -96,13 +96,13 @@ export default class MessageRepo {
   ) {
     // invalid scenarios:
     if (respondedMsgId && broadcastMsgId) {
-      return new Error(
+      throw new Error(
         "respondedMsgId and broadcastMsgId are mutually exclusive"
       );
     }
 
     if (!broadcastMsgId && additionalMessage) {
-      return new Error("additionalMessage cannot exist without broadcastMsgId");
+      throw new Error("additionalMessage cannot exist without broadcastMsgId");
     }
 
     return await this.client.$transaction(async (tx) => {
