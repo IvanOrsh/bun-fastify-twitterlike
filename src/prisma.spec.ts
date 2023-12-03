@@ -207,4 +207,118 @@ describe("testing prisma access", () => {
 
     expect(updatedProfileA?.messages.length).toBe(0);
   });
+
+  it("retrieve only userName and fullName of profile", async () => {
+    const {
+      userName: userNameA,
+      fullName: fullNameA,
+      description: descriptionA,
+      region: regionA,
+      mainUrl: mainUrlA,
+      avatar: avatarA,
+    } = getNewProfile();
+    const profileA = await prisma.profile.create({
+      data: {
+        userName: userNameA,
+        fullName: fullNameA,
+        description: descriptionA,
+        region: regionA,
+        mainUrl: mainUrlA,
+        avatar: avatarA,
+      },
+    });
+
+    let freshProfile = await prisma.profile.findFirstOrThrow({
+      select: {
+        userName: true,
+        fullName: true,
+      },
+      where: {
+        id: profileA.id,
+      },
+    });
+
+    expect(freshProfile.userName).toBe(profileA.userName);
+    expect(freshProfile.fullName).toBe(profileA.fullName);
+  });
+
+  it("retrieve multiple profiles", async () => {
+    const {
+      userName: userNameA,
+      fullName: fullNameA,
+      description: descriptionA,
+      region: regionA,
+      mainUrl: mainUrlA,
+      avatar: avatarA,
+    } = getNewProfile();
+    const profileA = await prisma.profile.create({
+      data: {
+        userName: userNameA,
+        fullName: fullNameA,
+        description: descriptionA,
+        region: regionA,
+        mainUrl: mainUrlA,
+        avatar: avatarA,
+      },
+    });
+
+    const {
+      userName: userNameB,
+      fullName: fullNameB,
+      description: descriptionB,
+      region: regionB,
+      mainUrl: mainUrlB,
+      avatar: avatarB,
+    } = getNewProfile();
+    let profileB = await prisma.profile.create({
+      data: {
+        userName: userNameB,
+        fullName: fullNameB,
+        description: descriptionB,
+        region: regionB,
+        mainUrl: mainUrlB,
+        avatar: avatarB,
+      },
+      include: {
+        messages: true,
+      },
+    });
+
+    let message = await prisma.message.create({
+      data: {
+        body: "abc",
+        authorId: profileA.id,
+      },
+    });
+
+    const profiles = await prisma.profile.findMany({
+      where: {
+        // messages: {
+        //   some: {
+        //     id: {
+        //       in: [BigInt(24323234), BigInt(2343242), message.id],
+        //     },
+        //   },
+        // },
+
+        OR: [
+          {
+            userName: {
+              endsWith: profileB.userName.substring(2),
+            },
+          },
+
+          {
+            userName: {
+              contains: profileA.userName.substring(2),
+            },
+          },
+        ],
+      },
+    });
+
+    expect(profiles.length).toBe(2);
+    expect(profiles[0].id).toBe(profileA.id);
+    expect(profiles[1].id).toBe(profileB.id);
+  });
 });
