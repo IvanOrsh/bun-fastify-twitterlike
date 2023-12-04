@@ -1,12 +1,15 @@
 import Fastify from "fastify";
 
 import Repository from "./repository/Repository";
+import profileRoute from "./route/profile/ProfileRoute";
 
 const server = Fastify({
   logger: true,
 });
 
 server.decorate("repo", new Repository());
+
+server.register(profileRoute);
 
 server.listen(
   {
