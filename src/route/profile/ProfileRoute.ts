@@ -219,6 +219,43 @@ const profileRoute: FastifyPluginAsync = async (fastify) => {
       }
     }
   );
+
+  instance.post(
+    "/follow",
+    {
+      schema: {
+        body: Type.Object({
+          followerId: Type.Integer(),
+          followedId: Type.Integer(),
+        }),
+
+        response: {
+          200: Type.Object({
+            followId: Type.Integer(),
+          }),
+
+          500: ErrorCodeType,
+        },
+      },
+    },
+    async (req, rep) => {
+      try {
+        const { followerId, followedId } = req.body;
+
+        const result = await instance.repo.profileRepo.insertFollow(
+          BigInt(followerId),
+          BigInt(followedId)
+        );
+
+        return rep.status(200).send({
+          followId: Number(result.id),
+        });
+      } catch (e) {
+        instance.log.error(`Insert follow error: ${e}`);
+        return rep.status(500).send(Status500);
+      }
+    }
+  );
 };
 
 export default profileRoute;
