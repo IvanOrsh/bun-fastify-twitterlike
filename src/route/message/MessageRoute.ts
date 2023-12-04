@@ -71,6 +71,7 @@ const messageRoute: FastifyPluginAsync = async (fastify) => {
             Type.Object({
               id: Type.Integer(),
               authorId: Type.Integer(),
+              updatedAt: Type.String(),
               body: Type.String(),
               likes: Type.Integer(),
               image: Type.Optional(Type.Any()),
@@ -107,6 +108,60 @@ const messageRoute: FastifyPluginAsync = async (fastify) => {
         );
       } catch (e) {
         instance.log.error(`Get followed messages error: ${e}`);
+        return rep.status(500).send(Status500);
+      }
+    }
+  );
+
+  instance.get(
+    "/broadcastermsgs/:broadcastId",
+    {
+      schema: {
+        params: Type.Object({
+          broadcastId: Type.Integer(),
+        }),
+
+        response: {
+          200: Type.Array(
+            Type.Object({
+              id: Type.Integer(),
+              authorId: Type.Integer(),
+              updatedAt: Type.String(),
+              body: Type.String(),
+              likes: Type.Integer(),
+              image: Type.Optional(Type.Any()),
+            })
+          ),
+
+          404: ErrorCodeType,
+        },
+      },
+    },
+    async (req, rep) => {
+      try {
+        const result = await instance.repo.messageRepo.selectMessageBroadcasts(
+          BigInt(req.params.broadcastId)
+        );
+
+        if (result.length === 0) {
+          return rep.status(404).send({
+            ...Status404,
+            message: "Broadcast messages not found",
+          });
+        }
+
+        return rep.status(200).send(
+          result.map((message) => ({
+            id: Number(message.broadcasterMsg.id),
+            updatedAt: message.broadcasterMsg.updatedAt.toISOString(),
+            authorId: Number(message.broadcasterMsg.authorId),
+            body: message.broadcasterMsg.body,
+            likes: message.broadcasterMsg.likes,
+            image: message.broadcasterMsg.image,
+          }))
+        );
+      } catch (e) {
+        instance.log.error(`Get broadcast messages error: ${e}`);
         return rep.status(500).send(Status500);
       }
     }
