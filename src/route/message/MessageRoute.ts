@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from "fastify";
 import { TypeBoxTypeProvider, Type } from "@fastify/type-provider-typebox";
-import { ErrorCodeType, Status500 } from "../ResponseTypes";
+
+import { ErrorCodeType, Status500, Status404 } from "../ResponseTypes";
 
 const messageRoute: FastifyPluginAsync = async (fastify) => {
   const instance = fastify.withTypeProvider<TypeBoxTypeProvider>();
@@ -52,6 +53,60 @@ const messageRoute: FastifyPluginAsync = async (fastify) => {
         });
       } catch (e) {
         instance.log.error(`Insert new message error: ${e}`);
+        return rep.status(500).send(Status500);
+      }
+    }
+  );
+
+  instance.get(
+    "/followedmsgs/:followerId",
+    {
+      schema: {
+        params: Type.Object({
+          followerId: Type.Integer(),
+        }),
+
+        response: {
+          200: Type.Array(
+            Type.Object({
+              id: Type.Integer(),
+              authorId: Type.Integer(),
+              body: Type.String(),
+              likes: Type.Integer(),
+              image: Type.Optional(Type.Any()),
+            })
+          ),
+
+          404: ErrorCodeType,
+        },
+      },
+    },
+    async (req, rep) => {
+      try {
+        const result =
+          await instance.repo.messageRepo.selectMessagesFromFollowed(
+            BigInt(req.params.followerId)
+          );
+
+        if (result.length === 0) {
+          return rep.status(404).send({
+            ...Status404,
+            message: "Followed messages not found",
+          });
+        }
+
+        return rep.status(200).send(
+          result.map((message) => ({
+            id: Number(message.id),
+            updatedAt: message.updatedAt.toISOString(),
+            authorId: Number(message.authorId),
+            body: message.body,
+            likes: message.likes,
+            image: message.image,
+          }))
+        );
+      } catch (e) {
+        instance.log.error(`Get followed messages error: ${e}`);
         return rep.status(500).send(Status500);
       }
     }
