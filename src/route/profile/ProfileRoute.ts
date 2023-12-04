@@ -103,6 +103,64 @@ const profileRoute: FastifyPluginAsync = async (fastify) => {
       }
     }
   );
+
+  instance.get(
+    "/followers/:followedId",
+    {
+      schema: {
+        params: Type.Object({
+          followedId: Type.Integer(),
+        }),
+
+        response: {
+          200: Type.Array(
+            Type.Object({
+              id: Type.Integer(),
+              updatedAt: Type.String(),
+              userName: Type.String(),
+              fullName: Type.String(),
+              description: Type.Optional(Type.String()),
+              region: Type.Optional(Type.String()),
+              mainUrl: Type.Optional(Type.String()),
+              avatar: Type.Optional(Type.Any()),
+            })
+          ),
+
+          404: ErrorCodeType,
+        },
+      },
+    },
+    async (req, rep) => {
+      try {
+        const result = await instance.repo.profileRepo.selectFollowerProfile(
+          BigInt(req.params.followedId)
+        );
+
+        if (result.length === 0) {
+          return rep.status(404).send({
+            ...Status404,
+            message: "No followers found",
+          });
+        }
+
+        return rep.status(200).send(
+          result.map((profile) => ({
+            id: Number(profile.id),
+            updatedAt: profile.updatedAt.toISOString(),
+            userName: profile.userName,
+            fullName: profile.fullName,
+            description: profile.description || undefined,
+            region: profile.region || undefined,
+            mainUrl: profile.mainUrl || undefined,
+            avatar: profile?.avatar?.toString("base64") || undefined,
+          }))
+        );
+      } catch (e) {
+        instance.log.error(`Get followers error: ${e}`);
+        return rep.status(500).send(Status500);
+      }
+    }
+  );
 };
 
 export default profileRoute;
