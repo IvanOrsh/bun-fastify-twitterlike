@@ -221,6 +221,61 @@ const messageRoute: FastifyPluginAsync = async (fastify) => {
       }
     }
   );
+
+  instance.get(
+    "/responsemsgs/:respondedMsgId",
+    {
+      schema: {
+        params: Type.Object({
+          respondedMsgId: Type.Integer(),
+        }),
+
+        response: {
+          200: Type.Array(
+            Type.Object({
+              id: Type.Integer(),
+              authorId: Type.Integer(),
+              updatedAt: Type.String(),
+              body: Type.String(),
+              likes: Type.Integer(),
+              image: Type.Optional(Type.Any()),
+            })
+          ),
+
+          404: ErrorCodeType,
+        },
+      },
+    },
+    async (req, rep) => {
+      try {
+        const { respondedMsgId } = req.params;
+        const result = await instance.repo.messageRepo.selectMessageResponses(
+          BigInt(respondedMsgId)
+        );
+
+        if (result.length === 0) {
+          return rep.status(404).send({
+            ...Status404,
+            message: "Response messages not found",
+          });
+        }
+
+        return rep.status(200).send(
+          result.map((message) => ({
+            id: Number(message.responderMsg.id),
+            updatedAt: message.responderMsg.updatedAt.toISOString(),
+            authorId: Number(message.responderMsg.authorId),
+            body: message.responderMsg.body,
+            likes: message.responderMsg.likes,
+            image: message.responderMsg.image,
+          }))
+        );
+      } catch (e) {
+        instance.log.error(`Get response messages error: ${e}`);
+        return rep.status(500).send(Status500);
+      }
+    }
+  );
 };
 
 export default messageRoute;
