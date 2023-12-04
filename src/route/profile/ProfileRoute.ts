@@ -58,6 +58,51 @@ const profileRoute: FastifyPluginAsync = async (fastify) => {
       }
     }
   );
+
+  instance.post(
+    "/profile",
+    {
+      schema: {
+        body: Type.Object({
+          userName: Type.String(),
+          fullName: Type.String(),
+          description: Type.Optional(Type.String()),
+          region: Type.Optional(Type.String()),
+          mainUrl: Type.Optional(Type.String()),
+          avatar: Type.Optional(Type.String({ contentEncoding: "base64" })),
+        }),
+
+        response: {
+          200: Type.Object({
+            id: Type.Integer(),
+          }),
+
+          500: ErrorCodeType,
+        },
+      },
+    },
+    async (req, rep) => {
+      try {
+        const { userName, fullName, description, region, mainUrl, avatar } =
+          req.body;
+        const result = await instance.repo.profileRepo.insertProfile(
+          userName,
+          fullName,
+          description,
+          region,
+          mainUrl,
+          avatar ? Buffer.from(avatar, "base64") : undefined
+        );
+
+        return rep.status(200).send({
+          id: Number(result.id),
+        });
+      } catch (e) {
+        instance.log.error(`Insert new profile error: ${e}`);
+        return rep.status(500).send(Status500);
+      }
+    }
+  );
 };
 
 export default profileRoute;
