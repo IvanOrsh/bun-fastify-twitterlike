@@ -21,7 +21,7 @@ COPY src ./src
 CMD curl -fsSL https://bun.sh/install | bash && \
     export PATH="${HOME}/.bun/bin:${PATH}" && \
     bun install --force && \    
-    bun install -g prisma@5.5.2 && \    
+    bun install -g prisma@5.6.0 && \    
     bun prisma generate && \
     bun prisma migrate deploy && \
     bun ./src/index.ts
