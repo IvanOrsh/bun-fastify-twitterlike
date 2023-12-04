@@ -166,6 +166,61 @@ const messageRoute: FastifyPluginAsync = async (fastify) => {
       }
     }
   );
+
+  instance.get(
+    "/authormsgs/:authorId",
+    {
+      schema: {
+        params: Type.Object({
+          authorId: Type.Integer(),
+        }),
+
+        response: {
+          200: Type.Array(
+            Type.Object({
+              id: Type.Integer(),
+              updatedAt: Type.String(),
+              authorId: Type.Integer(),
+              body: Type.String(),
+              likes: Type.Integer(),
+              image: Type.Optional(Type.Any()),
+            })
+          ),
+
+          404: ErrorCodeType,
+        },
+      },
+    },
+    async (req, rep) => {
+      try {
+        const result =
+          await instance.repo.messageRepo.selectedMessagesByAuthorId(
+            BigInt(req.params.authorId)
+          );
+
+        if (result.length === 0) {
+          return rep.status(404).send({
+            ...Status404,
+            message: "Author messages not found",
+          });
+        }
+
+        return rep.status(200).send(
+          result.map((message) => ({
+            id: Number(message.id),
+            updatedAt: message.updatedAt.toISOString(),
+            authorId: Number(message.authorId),
+            body: message.body,
+            likes: message.likes,
+            image: message.image,
+          }))
+        );
+      } catch (e) {
+        instance.log.error(`Get author messages error: ${e}`);
+        return rep.status(500).send(Status500);
+      }
+    }
+  );
 };
 
 export default messageRoute;
